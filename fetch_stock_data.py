@@ -56,18 +56,13 @@ def extract_key_metrics(ticker):
 
 def save_to_csv(filename, data):
     """Saves or updates stock data in a CSV file."""
-    file_exists = os.path.isfile(filename)
-    fieldnames = ["Ticker", "Company Name", "Free Cash Flow", "Current Price", "DCF Intrinsic Value", "Last Updated"]
+    fieldnames = ["Ticker", "Company Name", "Free Cash Flow", "Current Price", "DCF Intrinsic Value", "Valuation Status", "Last Updated"]
     
-    try:
-        with open(filename, mode="a" if file_exists else "w", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            if not file_exists:
-                writer.writeheader()
-            writer.writerow(data)
-        logging.info(f"Data saved to {filename}")
-    except Exception as e:
-        logging.error(f"Error saving data to {filename}: {e}")
+    df = pd.read_csv(filename) if os.path.exists(filename) else pd.DataFrame(columns=fieldnames)
+    df = df[df["Ticker"] != data["Ticker"]]  # Remove existing entry for ticker
+    df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)  # Add new data
+    df.to_csv(filename, index=False)
+    logging.info(f"Data updated in {filename}")
 
 def save_to_json(filename, data):
     """Saves or updates stock data in a JSON file."""
@@ -79,10 +74,11 @@ def save_to_json(filename, data):
                     json_data = json.load(file)
                 except json.JSONDecodeError:
                     pass
+        json_data = [entry for entry in json_data if entry["Ticker"] != data["Ticker"]]  # Remove existing entry
         json_data.append(data)
         with open(filename, "w") as file:
             json.dump(json_data, file, indent=4)
-        logging.info(f"Data saved to {filename}")
+        logging.info(f"Data updated in {filename}")
     except Exception as e:
         logging.error(f"Error saving data to {filename}: {e}")
 
@@ -97,6 +93,11 @@ def process_stock(ticker):
     risk_free_rate = get_risk_free_rate()
     dcf_value = metrics.get("Free Cash Flow") * 10 if metrics.get("Free Cash Flow") else None  # Simplified DCF estimation
     metrics["DCF Intrinsic Value"] = dcf_value
+    
+    if dcf_value and metrics["Current Price"]:
+        metrics["Valuation Status"] = "Undervalued" if dcf_value > metrics["Current Price"] else "Overvalued"
+    else:
+        metrics["Valuation Status"] = "Unknown"
     
     save_to_csv("valuations.csv", metrics)
     save_to_json("valuations.json", metrics)
@@ -113,4 +114,4 @@ if __name__ == "__main__":
     with Pool(processes=min(len(tickers), cpu_count())) as pool:
         pool.map(process_stock, tickers)
     
-    logging.info("Batch processing complete. Data saved to CSV and JSON.")
+    logging.info("Batch processing complete. Data updated in CSV and JSON.")
