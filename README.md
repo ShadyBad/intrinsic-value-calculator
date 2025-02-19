@@ -5,7 +5,7 @@ The **Intrinsic Value Calculator** is a Python-based tool that calculates the in
 
 This project is designed for investors and analysts who want an automated method to determine whether a stock is undervalued or overvalued.
 
-## **⚡ Features**
+## **Features**
 - ✅ **Fetches real-time stock data** (from Yahoo Finance API)
 - ✅ **Uses Discounted Cash Flow (DCF) Model** for valuation
 - ✅ **Batch processing** (Analyze multiple stocks at once)
@@ -16,7 +16,7 @@ This project is designed for investors and analysts who want an automated method
 
 ---
 
-## **🚀 Installation**
+## **Installation**
 ### **1️. Clone the Repository**
 ```sh
 git clone https://github.com/your-username/Intrinsic-Value-Calculator.git
